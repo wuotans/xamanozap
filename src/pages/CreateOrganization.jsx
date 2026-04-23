@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useOrganization } from '@/hooks/useOrganization.jsx';
+import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Building2, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from '@/components/ui/use-toast';
 
 export default function CreateOrganization() {
-  const { user } = useOrganization();
+  const { user } = useAuth(); // Mudar para useAuth
+  const { fetchOrganizations } = useOrganization();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
@@ -20,38 +23,73 @@ export default function CreateOrganization() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      toast({
+        title: "Erro",
+        description: "O nome da organização é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    try {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
 
-    const org = await base44.entities.Organization.create({
-      name: name.trim(),
-      slug,
-      owner_email: user.email,
-      phone,
-      plan: 'free',
-      status: 'active',
-      max_users: 3,
-      max_connections: 1,
-      max_queues: 3,
-    });
+      // Criar organização no nosso backend
+      const response = await base44.post('/organizations', {
+        name: name.trim(),
+        slug: slug,
+        owner_email: user?.email,
+        phone: phone || null,
+        plan: 'free',
+        status: 'active',
+        max_users: 3,
+        max_connections: 1,
+        max_queues: 3,
+      });
 
-    await base44.entities.Member.create({
-      organization_id: org.id,
-      user_email: user.email,
-      user_name: user.full_name,
-      role: 'owner',
-      status: 'active',
-      queues: [],
-    });
+      const newOrg = response.data;
 
-    await queryClient.invalidateQueries({ queryKey: ['memberships'] });
-    await queryClient.invalidateQueries({ queryKey: ['userOrgs'] });
+      // Criar membro owner
+      await base44.post('/members', {
+        organization_id: newOrg.id,
+        user_email: user?.email,
+        user_name: user?.name || user?.full_name,
+        role: 'owner',
+        status: 'active',
+        queues: [],
+      });
 
-    setTimeout(() => {
-      navigate('/');
-    }, 500);
+      // Atualizar o usuário com a organization_id
+      await base44.put(`/users/${user?.id}`, {
+        organization_id: newOrg.id
+      });
+
+      // Invalidar queries para recarregar dados
+      await queryClient.invalidateQueries({ queryKey: ['memberships'] });
+      await queryClient.invalidateQueries({ queryKey: ['userOrgs'] });
+      await fetchOrganizations(); // Recarregar organizações
+
+      toast({
+        title: "Sucesso!",
+        description: "Organização criada com sucesso",
+      });
+
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+    } catch (error) {
+      console.error('Erro ao criar organização:', error);
+      toast({
+        title: "Erro",
+        description: error.response?.data?.message || "Erro ao criar organização",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

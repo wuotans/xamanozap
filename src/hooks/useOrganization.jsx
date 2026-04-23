@@ -1,70 +1,66 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
 
-const OrgContext = createContext(null);
+const OrganizationContext = createContext();
 
-export function OrganizationProvider({ children }) {
-  const [currentOrgId, setCurrentOrgId] = useState(() => {
-    return localStorage.getItem('currentOrgId') || null;
-  });
+export const useOrganization = () => {
+  const context = useContext(OrganizationContext);
+  if (!context) {
+    throw new Error('useOrganization must be used within OrganizationProvider');
+  }
+  return context;
+};
 
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-  });
-
-  const { data: memberships = [], isLoading: isLoadingMemberships } = useQuery({
-    queryKey: ['memberships', user?.email],
-    queryFn: () => base44.entities.Member.filter({ user_email: user.email, status: 'active' }),
-    enabled: !!user?.email,
-  });
-
-  const { data: organizations = [], isLoading: isLoadingOrgs } = useQuery({
-    queryKey: ['userOrgs', memberships],
-    queryFn: async () => {
-      if (memberships.length === 0) return [];
-      const orgIds = memberships.map(m => m.organization_id);
-      const allOrgs = await base44.entities.Organization.list();
-      return allOrgs.filter(o => orgIds.includes(o.id));
-    },
-    enabled: memberships.length > 0,
-  });
-
-  const currentOrg = organizations.find(o => o.id === currentOrgId) || organizations[0] || null;
-  const currentMembership = memberships.find(m => m.organization_id === (currentOrg?.id)) || null;
+export const OrganizationProvider = ({ children }) => {
+  const [organization, setOrganization] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (currentOrg && currentOrg.id !== currentOrgId) {
-      setCurrentOrgId(currentOrg.id);
-      localStorage.setItem('currentOrgId', currentOrg.id);
-    }
-  }, [currentOrg, currentOrgId]);
+    fetchOrganizations();
+  }, []);
 
-  const switchOrg = (orgId) => {
-    setCurrentOrgId(orgId);
-    localStorage.setItem('currentOrgId', orgId);
+  const fetchOrganizations = async () => {
+    try {
+      setLoading(true);
+      const response = await base44.get('/organizations');
+      setOrganizations(response.data);
+      if (response.data.length > 0 && !organization) {
+        setOrganization(response.data[0]);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar organizações:', err);
+      setError(err.message);
+      // Dados mockados para teste
+      const mockOrganizations = [
+        { id: 1, name: 'Empresa A', status: 'active' },
+        { id: 2, name: 'Empresa B', status: 'active' },
+      ];
+      setOrganizations(mockOrganizations);
+      setOrganization(mockOrganizations[0]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const isLoading = isLoadingMemberships || isLoadingOrgs;
+  const switchOrganization = (org) => {
+    setOrganization(org);
+    localStorage.setItem('selectedOrganization', JSON.stringify(org));
+  };
+
+  const value = {
+    organization,
+    organizations,
+    loading,
+    error,
+    switchOrganization,
+    fetchOrganizations,
+  };
 
   return (
-    <OrgContext.Provider value={{
-      user,
-      organizations,
-      currentOrg,
-      currentMembership,
-      switchOrg,
-      isLoading,
-      hasOrgs: organizations.length > 0,
-    }}>
+    <OrganizationContext.Provider value={value}>
       {children}
-    </OrgContext.Provider>
+    </OrganizationContext.Provider>
   );
-}
-
-export function useOrganization() {
-  const ctx = useContext(OrgContext);
-  if (!ctx) throw new Error('useOrganization must be used within OrganizationProvider');
-  return ctx;
-}
+};

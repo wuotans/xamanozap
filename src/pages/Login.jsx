@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,8 +11,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,8 +82,8 @@ export default function Login() {
           
           <div className="mt-6 pt-4 border-t text-center text-sm text-muted-foreground">
             <p className="font-medium mb-2">Credenciais de teste:</p>
-            <p>Admin: admin@xamanozap.com / admin123</p>
-            <p>Usuário: user@teste.com / admin123</p>
+            <p>👑 Admin: admin@xamanozap.com / admin123</p>
+            <p>👤 Usuário: user@teste.com / admin123</p>
           </div>
         </CardContent>
       </Card>

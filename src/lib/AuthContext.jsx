@@ -23,6 +23,13 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Redirecionar em efeito separado para evitar erro de renderização
+  useEffect(() => {
+    if (authError?.type === 'auth_required' && !isLoadingAuth) {
+      navigate('/login');
+    }
+  }, [authError, isLoadingAuth, navigate]);
+
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
     
@@ -70,6 +77,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('token');
       setUser(null);
+      setAuthError({ type: 'auth_required' });
       navigate('/login');
     }
   };

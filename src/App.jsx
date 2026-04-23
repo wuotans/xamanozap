@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -21,55 +21,99 @@ import AdminOrganizations from '@/pages/admin/Organizations';
 import AdminPlans from '@/pages/admin/Plans';
 import Login from '@/pages/Login';
 
-const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
-
-  if (isLoadingPublicSettings || isLoadingAuth) {
+// Componente para rotas protegidas
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const { user, isLoadingAuth } = useAuth();
+  
+  if (isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground font-medium">Carregando XamanoZap...</p>
+          <p className="text-sm text-muted-foreground font-medium">Carregando...</p>
         </div>
       </div>
     );
   }
-
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
-    }
-  }
-
-  // Se não estiver autenticado, mostrar login
+  
   if (!user) {
-    return <Login />;
+    return <Navigate to="/login" replace />;
   }
+  
+  if (adminOnly && user.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
 
+// Componente que engloba as rotas com OrganizationProvider
+const AppRoutesWithProvider = () => {
   return (
     <OrganizationProvider>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/tickets" element={<Tickets />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/connections" element={<Connections />} />
-          <Route path="/queues" element={<Queues />} />
-          <Route path="/quick-messages" element={<QuickMessages />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/create-organization" element={<CreateOrganization />} />
-          {/* Rotas administrativas - só aparecem se for admin */}
-          {user?.role === 'admin' && (
-            <>
-              <Route path="/admin/organizations" element={<AdminOrganizations />} />
-              <Route path="/admin/plans" element={<AdminPlans />} />
-            </>
-          )}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/tickets" element={
+            <ProtectedRoute>
+              <Tickets />
+            </ProtectedRoute>
+          } />
+          <Route path="/contacts" element={
+            <ProtectedRoute>
+              <Contacts />
+            </ProtectedRoute>
+          } />
+          <Route path="/connections" element={
+            <ProtectedRoute>
+              <Connections />
+            </ProtectedRoute>
+          } />
+          <Route path="/queues" element={
+            <ProtectedRoute>
+              <Queues />
+            </ProtectedRoute>
+          } />
+          <Route path="/quick-messages" element={
+            <ProtectedRoute>
+              <QuickMessages />
+            </ProtectedRoute>
+          } />
+          <Route path="/members" element={
+            <ProtectedRoute>
+              <Members />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/create-organization" element={
+            <ProtectedRoute>
+              <CreateOrganization />
+            </ProtectedRoute>
+          } />
+          
+          {/* Rotas administrativas */}
+          <Route path="/admin/organizations" element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminOrganizations />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/plans" element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminPlans />
+            </ProtectedRoute>
+          } />
         </Route>
+        
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </OrganizationProvider>
@@ -78,14 +122,14 @@ const AuthenticatedApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClientInstance}>
+      <Router>
+        <AuthProvider>
+          <AppRoutesWithProvider />
+        </AuthProvider>
+      </Router>
+      <Toaster />
+    </QueryClientProvider>
   )
 }
 

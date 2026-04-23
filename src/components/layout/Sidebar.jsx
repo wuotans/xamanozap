@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/hooks/useOrganization.jsx';
+import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -24,7 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { base44 } from '@/api/base44Client';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -44,9 +44,16 @@ const adminItems = [
 
 export default function Sidebar({ collapsed, onToggle }) {
   const location = useLocation();
-  const { user, currentOrg, organizations, switchOrg, currentMembership } = useOrganization();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth(); // Adicionar logout do AuthContext
+  const { currentOrg, organizations, switchOrg, currentMembership } = useOrganization();
   const isGlobalAdmin = user?.role === 'admin';
   const isOrgAdmin = currentMembership?.role === 'owner' || currentMembership?.role === 'admin';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <aside className={`fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground flex flex-col z-50 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'} border-r border-sidebar-border`}>
@@ -70,7 +77,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold truncate">{currentOrg.name}</p>
-                <p className="text-[10px] text-sidebar-foreground/50 capitalize">{currentOrg.plan}</p>
+                <p className="text-[10px] text-sidebar-foreground/50 capitalize">{currentOrg.plan || 'Plano Básico'}</p>
               </div>
               <ChevronDown className="w-3 h-3 text-sidebar-foreground/50" />
             </DropdownMenuTrigger>
@@ -150,18 +157,18 @@ export default function Sidebar({ collapsed, onToggle }) {
           <DropdownMenuTrigger className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-accent transition-colors">
             <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center flex-shrink-0">
               <span className="text-xs font-bold text-sidebar-primary">
-                {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                {user?.name?.[0]?.toUpperCase() || user?.full_name?.[0]?.toUpperCase() || 'U'}
               </span>
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-semibold truncate">{user?.full_name || 'Usuário'}</p>
+                <p className="text-xs font-semibold truncate">{user?.name || user?.full_name || 'Usuário'}</p>
                 <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email}</p>
               </div>
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => base44.auth.logout()}>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Sair
             </DropdownMenuItem>
