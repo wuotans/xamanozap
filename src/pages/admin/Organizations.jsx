@@ -1,66 +1,110 @@
-import React from 'react';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Building2, Users, Phone } from 'lucide-react';
-import { format } from 'date-fns';
-
-const planColors = {
-  free: 'bg-muted text-muted-foreground',
-  starter: 'bg-blue-100 text-blue-700',
-  professional: 'bg-primary/10 text-primary',
-  enterprise: 'bg-amber-100 text-amber-700',
-};
-
-const statusColors = {
-  active: 'bg-primary/10 text-primary',
-  suspended: 'bg-destructive/10 text-destructive',
-  cancelled: 'bg-muted text-muted-foreground',
-};
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Building2, RefreshCw } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function AdminOrganizations() {
-  const { data: organizations = [], isLoading } = useQuery({
-    queryKey: ['adminOrgs'],
-    queryFn: () => base44.entities.Organization.list('-created_date'),
-  });
+  const { user } = useAuth();
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  const fetchOrganizations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('🔍 Buscando organizações para admin...');
+      
+      const token = localStorage.getItem('token');
+      console.log('Token existe?', !!token);
+      
+      const response = await base44.get('/admin/organizations');
+      console.log('📦 Resposta da API admin:', response.data);
+      
+      setOrganizations(response.data);
+    } catch (err) {
+      console.error('❌ Erro detalhado:', err);
+      console.error('Status:', err.response?.status);
+      console.error('Mensagem:', err.response?.data?.message);
+      setError(err.response?.data?.message || err.message || 'Erro ao carregar organizações');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-green-500">Ativo</Badge>;
+      case 'inactive':
+        return <Badge variant="secondary">Inativo</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getPlanBadge = (plan) => {
+    switch (plan) {
+      case 'free':
+        return <Badge variant="outline">Free</Badge>;
+      case 'basic':
+        return <Badge>Básico</Badge>;
+      case 'professional':
+        return <Badge className="bg-blue-500">Profissional</Badge>;
+      case 'enterprise':
+        return <Badge className="bg-purple-500">Enterprise</Badge>;
+      default:
+        return <Badge variant="outline">{plan || 'N/A'}</Badge>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando organizações...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <p className="font-semibold">Erro ao carregar organizações</p>
+            <p className="text-sm mt-2">{error}</p>
+          </div>
+          <Button onClick={fetchOrganizations} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Organizações</h1>
-        <p className="text-muted-foreground mt-1">Todas as organizações da plataforma</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary/10"><Building2 className="w-5 h-5 text-primary" /></div>
-            <div>
-              <p className="text-2xl font-bold">{organizations.length}</p>
-              <p className="text-xs text-muted-foreground">Total</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary/10"><Building2 className="w-5 h-5 text-primary" /></div>
-            <div>
-              <p className="text-2xl font-bold">{organizations.filter(o => o.status === 'active').length}</p>
-              <p className="text-xs text-muted-foreground">Ativas</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-amber-100"><Building2 className="w-5 h-5 text-amber-700" /></div>
-            <div>
-              <p className="text-2xl font-bold">{organizations.filter(o => o.plan !== 'free').length}</p>
-              <p className="text-xs text-muted-foreground">Pagas</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Organizações</h1>
+          <p className="text-muted-foreground">Gerencie todas as organizações do sistema</p>
+        </div>
+        <Button onClick={fetchOrganizations} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       <Card>
@@ -70,38 +114,35 @@ export default function AdminOrganizations() {
               <TableRow>
                 <TableHead>Organização</TableHead>
                 <TableHead>Plano</TableHead>
+                <TableHead>Telefone</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Proprietário</TableHead>
-                <TableHead>Criada em</TableHead>
+                <TableHead>Máx. Usuários</TableHead>
+                <TableHead>Criado em</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              ) : organizations.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma organização</TableCell></TableRow>
+              {organizations.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Nenhuma organização encontrada
+                  </TableCell>
+                </TableRow>
               ) : (
-                organizations.map(org => (
+                organizations.map((org) => (
                   <TableRow key={org.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{org.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{org.slug}</p>
-                        </div>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        {org.name}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={`capitalize ${planColors[org.plan]}`}>{org.plan}</Badge>
+                    <TableCell>{getPlanBadge(org.plan)}</TableCell>
+                    <TableCell>{org.phone || '-'}</TableCell>
+                    <TableCell>{getStatusBadge(org.status)}</TableCell>
+                    <TableCell>{org.max_users || 3}</TableCell>
+                    <TableCell className="text-sm">
+                      {new Date(org.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={`capitalize ${statusColors[org.status]}`}>{org.status === 'active' ? 'Ativa' : org.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">{org.owner_email}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{format(new Date(org.created_date), 'dd/MM/yyyy')}</TableCell>
                   </TableRow>
                 ))
               )}
