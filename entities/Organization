@@ -1,0 +1,74 @@
+{
+  "name": "Organization",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome da organiza\u00e7\u00e3o"
+    },
+    "slug": {
+      "type": "string",
+      "description": "Identificador \u00fanico da organiza\u00e7\u00e3o"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL do logo da organiza\u00e7\u00e3o"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "starter",
+        "professional",
+        "enterprise"
+      ],
+      "default": "free",
+      "description": "Plano atual"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "max_users": {
+      "type": "number",
+      "default": 3
+    },
+    "max_connections": {
+      "type": "number",
+      "default": 1
+    },
+    "max_queues": {
+      "type": "number",
+      "default": 3
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email do propriet\u00e1rio"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "business_hours_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "business_hours_start": {
+      "type": "string",
+      "default": "08:00"
+    },
+    "business_hours_end": {
+      "type": "string",
+      "default": "18:00"
+    }
+  },
+  "required": [
+    "name",
+    "slug",
+    "owner_email"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "Contact",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_blocked": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "organization_id",
+    "name",
+    "phone"
+  ]
+}

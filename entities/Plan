@@ -1,0 +1,45 @@
+{
+  "name": "Plan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string",
+      "enum": [
+        "free",
+        "starter",
+        "professional",
+        "enterprise"
+      ]
+    },
+    "price_monthly": {
+      "type": "number"
+    },
+    "max_users": {
+      "type": "number"
+    },
+    "max_connections": {
+      "type": "number"
+    },
+    "max_queues": {
+      "type": "number"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "key",
+    "price_monthly"
+  ]
+}

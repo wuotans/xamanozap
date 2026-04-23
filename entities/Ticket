@@ -1,0 +1,70 @@
+{
+  "name": "Ticket",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "contact_id": {
+      "type": "string"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "queue_id": {
+      "type": "string"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email do agente atribu\u00eddo"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "pending",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "last_message": {
+      "type": "string"
+    },
+    "last_message_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rating": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "connection_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "organization_id",
+    "contact_name"
+  ]
+}

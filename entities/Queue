@@ -1,0 +1,33 @@
+{
+  "name": "Queue",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome da fila"
+    },
+    "color": {
+      "type": "string",
+      "description": "Cor identificadora da fila"
+    },
+    "greeting_message": {
+      "type": "string",
+      "description": "Mensagem de sauda\u00e7\u00e3o"
+    },
+    "order": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "organization_id",
+    "name"
+  ]
+}

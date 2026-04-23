@@ -1,0 +1,26 @@
+{
+  "name": "QuickMessage",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "shortcut": {
+      "type": "string",
+      "description": "Atalho para a mensagem"
+    },
+    "message": {
+      "type": "string",
+      "description": "Conte\u00fado da mensagem"
+    },
+    "queue_id": {
+      "type": "string",
+      "description": "Fila espec\u00edfica (opcional)"
+    }
+  },
+  "required": [
+    "organization_id",
+    "shortcut",
+    "message"
+  ]
+}

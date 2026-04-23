@@ -1,0 +1,46 @@
+{
+  "name": "WhatsAppConnection",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome da conex\u00e3o"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "connected",
+        "disconnected",
+        "pending",
+        "error"
+      ],
+      "default": "disconnected"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "official_api",
+        "unofficial",
+        "hub"
+      ],
+      "default": "official_api"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "organization_id",
+    "name"
+  ]
+}

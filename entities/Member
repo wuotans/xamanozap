@@ -1,0 +1,50 @@
+{
+  "name": "Member",
+  "type": "object",
+  "properties": {
+    "organization_id": {
+      "type": "string",
+      "description": "ID da organiza\u00e7\u00e3o"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email do membro"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Nome do membro"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "admin",
+        "agent",
+        "viewer"
+      ],
+      "default": "agent",
+      "description": "Papel na organiza\u00e7\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "suspended"
+      ],
+      "default": "pending"
+    },
+    "queues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das filas atribu\u00eddas"
+    }
+  },
+  "required": [
+    "organization_id",
+    "user_email",
+    "role"
+  ]
+}
