@@ -19,9 +19,10 @@ import QuickMessages from '@/pages/QuickMessages';
 import Settings from '@/pages/Settings';
 import AdminOrganizations from '@/pages/admin/Organizations';
 import AdminPlans from '@/pages/admin/Plans';
+import Login from '@/pages/Login';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -43,6 +44,11 @@ const AuthenticatedApp = () => {
     }
   }
 
+  // Se não estiver autenticado, mostrar login
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <OrganizationProvider>
       <Routes>
@@ -56,8 +62,13 @@ const AuthenticatedApp = () => {
           <Route path="/members" element={<Members />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/create-organization" element={<CreateOrganization />} />
-          <Route path="/admin/organizations" element={<AdminOrganizations />} />
-          <Route path="/admin/plans" element={<AdminPlans />} />
+          {/* Rotas administrativas - só aparecem se for admin */}
+          {user?.role === 'admin' && (
+            <>
+              <Route path="/admin/organizations" element={<AdminOrganizations />} />
+              <Route path="/admin/plans" element={<AdminPlans />} />
+            </>
+          )}
         </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>
